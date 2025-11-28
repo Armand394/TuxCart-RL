@@ -5,6 +5,7 @@ from stable_baselines3 import TD3
 from stable_baselines3.common.env_checker import check_env
 from pystk2_gymnasium import AgentSpec
 from wrappers import STKContinuousWrapper
+from tqdm import tqdm
 
 
 # STK gymnasium uses one process
@@ -41,9 +42,10 @@ if __name__ == "__main__":
         tensorboard_log="./logs/tuxCart-td3-continuous-tb/"
     )
 
-    model.learn(total_timesteps=200_000, tb_log_name="run_1")
+    model.learn(total_timesteps=200_000, tb_log_name="run_1", progress_bar = True)
 
     # Save
     model.save("td3_stk_continuous")
+
 
     env.close()
