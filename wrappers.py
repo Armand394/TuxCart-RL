@@ -24,6 +24,8 @@ class STKContinuousWrapper(gym.Wrapper):
         # One-hot length for discrete observations
         self.disc_dims = disc_obs_space.nvec
         self.total_disc_onehot = int(np.sum(self.disc_dims))
+        
+        print(self.disc_dims, self.total_disc_onehot)
 
         low = []
         high = []
@@ -53,15 +55,8 @@ class STKContinuousWrapper(gym.Wrapper):
 
 
     def step(self, action):
-        # Build full action dict for STK:
-        full_action = {
-            "continuous": action,
-            "discrete": np.zeros_like(self.env.action_space["discrete"])  # ignore discrete actions
-        }
-
-        obs, reward, terminated, truncated, info = self.env.step(full_action)
+        obs, reward, terminated, truncated, info = self.env.step(action)
         return self._flatten_obs(obs), reward, terminated, truncated, info
-
 
     def _flatten_obs(self, obs):
         cont = obs["continuous"]

@@ -11,39 +11,41 @@ from wrappers import STKContinuousWrapper
 if __name__ == "__main__":
     # Base environment
     base_env = gym.make(
-        "supertuxkart/flattened-v0",
+        "supertuxkart/flattened_continuous_actions-v0",
         agent=AgentSpec(use_ai=False),
         difficulty=0,
         render_mode="human"
     )
 
+    print("Obs space:", base_env.observation_space)
+    print("Action space:", base_env.action_space)
+
     # Wrapped environment
     env = STKContinuousWrapper(base_env)
 
-    print("Obs space:", env.observation_space)
-    print("Action space:", env.action_space)
 
-    check_env(env, warn=True)
 
-    # ======================
-    # Train TD3
-    # ======================
-    model = TD3(
-        "MlpPolicy",
-        env,
-        verbose=1,
-        learning_rate=3e-4,
-        buffer_size=200_000,
-        batch_size=256,
-        gamma=0.99,
-        tau=0.005,
-        train_freq=(2, "episode"),
-        tensorboard_log="./logs/tuxCart-td3-continuous-tb/"
-    )
+    # check_env(env, warn=True)
 
-    model.learn(total_timesteps=200_000, tb_log_name="run_1")
+    # # ======================
+    # # Train TD3
+    # # ======================
+    # model = TD3(
+    #     "MlpPolicy",
+    #     env,
+    #     verbose=1,
+    #     learning_rate=3e-4,
+    #     buffer_size=200_000,
+    #     batch_size=256,
+    #     gamma=0.99,
+    #     tau=0.005,
+    #     train_freq=(2, "episode"),
+    #     tensorboard_log="./logs/tuxCart-td3-continuous-tb/"
+    # )
 
-    # Save
-    model.save("td3_stk_continuous")
+    # model.learn(total_timesteps=200_000, tb_log_name="run_1")
 
-    env.close()
+    # # Save
+    # model.save("td3_stk_continuous")
+
+    # env.close()
