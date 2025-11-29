@@ -12,19 +12,13 @@ import inspect
 from .pystk_actor import env_name, get_wrappers, player_name
 from bbrl.agents.gymnasium import ParallelGymAgent, make_env
 from functools import partial
-
 from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback, EveryNTimesteps
+import glob
+
+
+CHECKPOINT_DIR = Path("./logs/checkpoints")
 
 def main():
-    # Base environment
-    # base_env = gym.make(
-    #     "supertuxkart/flattened-v0",
-    #     agent=AgentSpec(use_ai=False),
-    #     difficulty=0,
-    #     render_mode=None
-    # )
-
-
     base_env = partial(
         make_env,
         env_name,
@@ -42,19 +36,31 @@ def main():
     check_env(env, warn=True)
     mod_path = Path(inspect.getfile(get_wrappers)).parent
 
-    checkpoint_on_event = CheckpointCallback(save_freq=1, save_path="./logs/")
-    event_callback = EveryNTimesteps(n_steps=1000, callback=checkpoint_on_event)
+    checkpoint_on_event = CheckpointCallback(save_freq=1, 
+                                             save_path=CHECKPOINT_DIR, 
+                                             save_replay_buffer=True)
+    event_callback = EveryNTimesteps(n_steps=50000, callback=checkpoint_on_event)
     # ========================
     # Train TD3
     # ========================
 
-    checkpoint_path = Path(mod_path / 'check_point.zip')
+    checkpoints = sorted(CHECKPOINT_DIR.glob("rl_model_*_steps.zip"))
 
-    if checkpoint_path.exists():
-        print('load check point')
-        model = TD3.load(checkpoint_path, env)
+    if checkpoints:
+        last_checkpoint = checkpoints[-1]
+        print("Load checkpoint:", last_checkpoint)
+
+        model = TD3.load(last_checkpoint, env)
+
+        replay_buf_path = last_checkpoint.with_suffix("").as_posix() + "_replay_buffer.pkl"
+        if Path(replay_buf_path).exists():
+            model.load_replay_buffer(replay_buf_path)
+            print("Load replay buffer.")
+        else:
+            print("replay buffer not found")
 
     else:
+        print("start from scratch")
         model = TD3(
             "MlpPolicy",
             env,
@@ -68,7 +74,7 @@ def main():
             tensorboard_log="./logs/tuxCart-td3-continuous-tb/"
         )
 
-    model.learn(total_timesteps=6_000,tb_log_name="run_1", progress_bar = True, callback=event_callback)
+    model.learn(total_timesteps=1_000_000,tb_log_name="run_1", progress_bar = True, callback=event_callback)
 
     policy = model.policy
 

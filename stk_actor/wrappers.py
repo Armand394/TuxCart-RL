@@ -18,6 +18,7 @@ class STKContinuousWrapper(gym.ObservationWrapper):
         # We convert:
         # obs = {"continuous": Box, "discrete": MultiDiscrete}
         # into a single large Box
+        print(env)
         cont_obs_space = env.observation_space["continuous"]
         disc_obs_space = env.observation_space["discrete"]
 
