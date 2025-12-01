@@ -50,3 +50,4 @@ class SB3Actor(Agent):
         actions = torch.tensor(actions, dtype=torch.float32)
 
         self.set(("action", t), actions)
+

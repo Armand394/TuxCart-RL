@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug stk_actor.learn",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "stk_actor.learn",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "."
+            }
+        },
+        {
+            "name": "Debug stk_actor.eval",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "stk_actor.eval",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "."
+            }
+        }
+    ]
+}

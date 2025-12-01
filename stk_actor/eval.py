@@ -6,6 +6,7 @@ from pystk2_gymnasium import AgentSpec
 from stk_actor.pystk_actor import get_wrappers, env_name, player_name
 from functools import partial
 from bbrl.agents.gymnasium import ParallelGymAgent, make_env
+from stable_baselines3.common.env_checker import check_env
 
 NUM_EPISODES = 5
 
@@ -20,6 +21,7 @@ def main():
     )
 
     env = base_env()
+    check_env(env, warn=True)
 
     model_path = "./models/model.zip"
     model = TD3.load(model_path)

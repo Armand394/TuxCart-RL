@@ -18,7 +18,7 @@ class STKContinuousWrapper(gym.ObservationWrapper):
         # We convert:
         # obs = {"continuous": Box, "discrete": MultiDiscrete}
         # into a single large Box
-        print(env)
+
         cont_obs_space = env.observation_space["continuous"]
         disc_obs_space = env.observation_space["discrete"]
 
@@ -69,6 +69,7 @@ class STKContinuousWrapper(gym.ObservationWrapper):
         cont = obs["continuous"]
         disc = obs["discrete"]
 
+
         # one-hot encode each discrete component
         onehots = []
         idx = 0
@@ -81,4 +82,45 @@ class STKContinuousWrapper(gym.ObservationWrapper):
         onehots = np.concatenate(onehots)
 
         return np.concatenate([cont, onehots]).astype(np.float32)
-    
+
+
+
+# class FlattenActionSpace(gym.ActionWrapper):
+#     def __init__(self, env):
+#         super().__init__(env)
+#         assert isinstance(env.action_space, gym.spaces.Dict)
+#         self.action_space = env.action_space["continuous"]
+
+#     def step(self, action):
+#         # Build full action dict for STK:
+#         full_action = {
+#             "continuous": action,
+#             # "discrete": np.zeros_like(self.env.action_space["discrete"])  # ignore discrete actions
+#             #brake,drift,fire,nitro,rescue
+#             "dicrete": [0,0,0,1,0]
+#         }
+
+#         obs, reward, terminated, truncated, info = self.env.step(full_action)
+#         return obs, reward, terminated, truncated, info
+
+
+
+class FlattenActionSpace(gym.ActionWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        assert isinstance(env.action_space, gym.spaces.Dict)
+        self.action_space = env.action_space["continuous"]
+
+    def action(self, action):
+        # Si action est déjà un dict (ex: check_env)
+        if isinstance(action, dict):
+            full_action = action
+        else:
+            # TD3 envoie juste la partie continue
+            full_action = {
+                "continuous": action,
+                "discrete": np.zeros_like(self.env.action_space["discrete"])
+            }
+
+        obs, reward, terminated, truncated, info = self.env.step(full_action)
+        return obs, reward, terminated, truncated, info

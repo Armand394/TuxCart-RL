@@ -1,7 +1,7 @@
 
 import torch
 from .actors import Actor, SB3Actor
-from .wrappers import STKContinuousWrapper
+from .wrappers import STKContinuousWrapper, FlattenActionSpace
 from typing import List, Callable
 import gymnasium as gym
 from bbrl.agents import Agents, Agent
@@ -16,14 +16,14 @@ def get_wrappers() -> List[Callable[[gym.Env], gym.Wrapper]]:
     environment"""
     return [
         # Example of a custom wrapper
-        lambda env: STKContinuousWrapper(env)
+        lambda env: FlattenActionSpace(env)
     ]
 
 
 def get_actor(
     state, observation_space: gym.spaces.Space, action_space: gym.spaces.Space
 ) -> Agent:
-    path = "./models/model"
+    path = "stk_actor/models/model"
     model = TD3.load(path)
     policy = model.policy
     actor = SB3Actor(policy, deterministic=False)
