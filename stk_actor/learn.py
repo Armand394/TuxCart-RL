@@ -5,9 +5,8 @@ from pathlib import Path
 import inspect
 from functools import partial
 
-import gymnasium as gym
 from pystk2_gymnasium import AgentSpec
-from stable_baselines3 import TD3
+from stable_baselines3 import SAC
 from stable_baselines3.common.env_checker import check_env
 from bbrl.agents.gymnasium import make_env
 from stable_baselines3.common.callbacks import CheckpointCallback, EveryNTimesteps
@@ -17,10 +16,12 @@ from .pystk_actor import env_name, get_wrappers, player_name
 
 
 
-CHECKPOINT_DIR = Path("./logs/checkpoints")
-LOG_DIR = "./logs/tuxCart-td3-continuous-tb/"
 
-def main():
+CHECKPOINT_DIR = Path("/Vrac/TD_proj/checkpoints")
+LOG_DIR = Path("/Vrac/TD_proj/logs")
+
+
+def main():              
     base_env = partial(
         make_env,
         env_name,
@@ -33,27 +34,34 @@ def main():
     env = base_env()
     print("Obs space:", env.observation_space)
     print("Action space:", env.action_space)
-    
+    print("sample obs:", env.reset()[0])
+    print("sample action:", env.action_space.sample())
 
-    check_env(env, warn=True)
+    # check_env(env, warn=True)
     mod_path = Path(inspect.getfile(get_wrappers)).parent
-
+    
     checkpoint_on_event = CheckpointCallback(save_freq=1, 
                                              save_path=CHECKPOINT_DIR, 
                                              save_replay_buffer=True)
     event_callback = EveryNTimesteps(n_steps=5000, callback=checkpoint_on_event)
-    # ========================
-    # Train TD3
-    # ========================
-
     checkpoints = sorted(CHECKPOINT_DIR.glob("rl_model_*_steps.zip"))
+
+
+    policy_kwargs = dict(
+        net_arch=dict(
+            pi=[512, 512, 256],
+            qf=[512, 512, 256]
+        ),
+        activation_fn=torch.nn.ReLU
+    )
+
 
     if checkpoints:
         last_checkpoint = checkpoints[-1]
         print("Load checkpoint:", last_checkpoint)
 
-        model = TD3.load(last_checkpoint, env)
-
+        # model = SAC.load(last_checkpoint, env)
+        model = SAC.load(last_checkpoint, env=env, tensorboard_log=str(LOG_DIR))
         replay_buf_path = last_checkpoint.with_suffix("").as_posix() + "_replay_buffer.pkl"
         if Path(replay_buf_path).exists():
             model.load_replay_buffer(replay_buf_path)
@@ -63,24 +71,27 @@ def main():
 
     else:
         print("start from scratch")
-        model = TD3(
-            "MultiInputPolicy",
+        model = SAC(
+            "MlpPolicy",
             env,
             learning_rate=3e-4,
-            buffer_size=200_000,
-            batch_size=256,
+            buffer_size=1_000_000,
+            batch_size=512,
+            train_freq=1,
+            gradient_steps=1,
             gamma=0.99,
             tau=0.005,
-            train_freq=(2, "episode"),
-            verbose=1,
-            tensorboard_log= LOG_DIR
+            target_update_interval=1,
+            learning_starts=20_000,
+            ent_coef="auto",
+            policy_kwargs=policy_kwargs,
+            tensorboard_log=str(LOG_DIR)
         )
 
-    model.learn(total_timesteps=1000,tb_log_name="run_1", progress_bar = True, callback=event_callback)
+    model.learn(total_timesteps=500_000,tb_log_name="run_1", progress_bar = True, callback=event_callback)
 
     policy = model.policy
 
-    # (3) Save the actor sate
     sb3_actor = SB3Actor(model)
     print("Model will be saved to:", mod_path / "models/model.zip")
     torch.save(policy.state_dict(), mod_path / "pystk_actor.pth")
