@@ -34,8 +34,8 @@ def main():
     )
 
     env = base_env()
-    # env = Monitor(env)
-    # env = DummyVecEnv([base_env])
+    env = Monitor(env)
+    env = DummyVecEnv([base_env])
     # env = VecNormalize(env, norm_obs=True, norm_reward=False)
     print("Obs space:", env.observation_space)
     print("Action space:", env.action_space)
@@ -94,7 +94,7 @@ def main():
             tensorboard_log=str(LOG_DIR)
         )
 
-    model.learn(total_timesteps=1000_000,tb_log_name="run_1", progress_bar = True, callback=event_callback)
+    model.learn(total_timesteps=100_000,tb_log_name="run_1", progress_bar = True, callback=event_callback)
 
     policy = model.policy
 

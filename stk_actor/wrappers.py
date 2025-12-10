@@ -15,15 +15,23 @@ class FlattenActionSpace(gym.ActionWrapper):
         low = np.concatenate([low_acc, low_steer])
         high = np.concatenate([high_acc, high_steer])
         self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
-        print("Flattened action space:", self.action_space)
-    def action(self, action_dict):
-        acc = action_dict["acceleration"]
-        steer = action_dict["steer"]
-        action= {
-            'continuous': np.concatenate([acc, steer]),
-            'discrete': np.array([0, 0,0, 1, 0], dtype=np.int64)
+    def action(self, action):
+        accel = float(action[0])
+        steer = float(action[1])
+
+        full_action = {
+            "acceleration": np.array([accel], dtype=np.float32),
+            "steer": np.array([steer], dtype=np.float32),
+
+            # forcés à zéro
+            "brake": 0,
+            "drift": 0,
+            "fire": 0,
+            "nitro": 0,
+            "rescue": 0,
         }
-        return action
+
+        return full_action
 class FlattenDictWrapper(gym.ObservationWrapper):
     def __init__(self, env):
         super().__init__(env)
