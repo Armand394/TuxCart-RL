@@ -34,9 +34,9 @@ def main():
     )
 
     env = base_env()
-    env = Monitor(env)
-    env = DummyVecEnv([base_env])
-    env = VecNormalize(env, norm_obs=True, norm_reward=False)
+    # env = Monitor(env)
+    # env = DummyVecEnv([base_env])
+    # env = VecNormalize(env, norm_obs=True, norm_reward=False)
     print("Obs space:", env.observation_space)
     print("Action space:", env.action_space)
     print("sample obs:", env.reset()[0])

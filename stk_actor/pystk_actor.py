@@ -1,6 +1,6 @@
 
 from .actors import Actor, SB3Actor, SamplingActor
-from .wrappers import  FlattenActionSpace, FlattenDictWrapper
+from .wrappers import  FlattenActionSpace, FlattenDictWrapper, FlattenFilterWrapper
 from typing import List, Callable
 import gymnasium as gym
 from bbrl.agents import Agents, Agent
@@ -8,7 +8,10 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 from stable_baselines3.common.monitor import Monitor
 import gymnasium as gym
-env_name = "supertuxkart/flattened-v0"
+from pystk2_gymnasium import PolarObservations
+# env_name = "supertuxkart/flattened-v0"
+# env_name="supertuxkart/flattened_continuous_actions-v0"
+env_name = "supertuxkart/full-v0"
 player_name = "MySACAgent"
 
 def get_wrappers() -> List[Callable[[gym.Env], gym.Wrapper]]:
@@ -16,7 +19,10 @@ def get_wrappers() -> List[Callable[[gym.Env], gym.Wrapper]]:
     environment"""
     return [
         # Example of a custom wrapper
-        lambda env: FlattenDictWrapper(env),
+        # lambda env: FlattenDictWrapper(env),
+        # lambda env: FlattenActionSpace(env),
+        lambda env: PolarObservations(env),
+        lambda env: FlattenFilterWrapper(env),
         lambda env: FlattenActionSpace(env),
     ]
 

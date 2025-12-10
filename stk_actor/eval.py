@@ -49,6 +49,7 @@ def main():
                 
                 obs, reward, terminated, truncated = env.step(action)
                 done = terminated[0] or truncated[0]['TimeLimit.truncated']
+                print(obs)
                 print("done:", done)
                 print("terminated:", terminated)
                 print("truncated:", truncated)
