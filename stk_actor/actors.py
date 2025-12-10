@@ -2,6 +2,7 @@
 import torch.nn as nn
 import torch
 from bbrl.agents import Agent
+import gymnasium as gym
 
 class Actor(nn.Module):
     """
@@ -39,15 +40,28 @@ class SB3Actor(Agent):
     def forward(self, t, **kwargs):
         obs_d = self.get(("env/env_obs/discrete", t))
         obs_c = self.get(("env/env_obs/continuous", t))
-
+        print("obs discrete:", obs_d)
+        print("obs continuous:", obs_c)
         obs = {
             'discrete': obs_d,
             'continuous': obs_c
         }
 
         actions, _ = self.sb3_policy.predict(obs, deterministic=self.deterministic)
+        print("="*20)
+        print("SB3 Actor actions:", actions)
+        print("="*20)
 
         actions = torch.tensor(actions, dtype=torch.float32)
-
         self.set(("action", t), actions)
 
+
+class SamplingActor(Agent):
+    """Just sample random actions"""
+
+    def __init__(self, action_space: gym.Space):
+        super().__init__()
+        self.action_space = action_space
+
+    def forward(self, t: int):
+        self.set(("action", t), torch.LongTensor([self.action_space.sample()]))

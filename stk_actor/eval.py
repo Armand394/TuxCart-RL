@@ -7,6 +7,9 @@ from stk_actor.pystk_actor import get_wrappers, env_name, player_name
 from functools import partial
 from bbrl.agents.gymnasium import ParallelGymAgent, make_env
 from stable_baselines3.common.env_checker import check_env
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
+from stable_baselines3.common.monitor import Monitor
+
 from pathlib import Path
 import inspect
 NUM_EPISODES = 5
@@ -20,17 +23,19 @@ def main():
         difficulty =0,
         agent=AgentSpec(use_ai=False, name=player_name),
     )
-
-    env = base_env()
-    print(env)
-    print(env.metadata)
-    # check_env(env, warn=True)
-
-    # model_path = "./models/model"
     mod_path = Path(inspect.getfile(get_wrappers)).parent
 
-    model = SAC.load(mod_path / "models/model.zip")
-    print(env)
+    env = base_env()
+    env = Monitor(env)
+    env = DummyVecEnv([base_env])
+    env = VecNormalize.load(mod_path / "vecnormalize.pkl", env)
+    env.training = False
+    env.norm_reward = False
+    env.metadata["fps"] = 60
+    mod_path = Path(inspect.getfile(get_wrappers)).parent
+
+    model = SAC.load(mod_path / "models/model_fix.zip",env=env)
+
 
     for episode in range(NUM_EPISODES):
         obs = env.reset()
@@ -40,9 +45,13 @@ def main():
         while not done:
             with torch.no_grad():
                 action, _states = model.predict(obs, deterministic=True)
-
+                print("Action:", action)
+                
                 obs, reward, terminated, truncated = env.step(action)
-                done = terminated or truncated
+                done = terminated[0] or truncated[0]['TimeLimit.truncated']
+                print("done:", done)
+                print("terminated:", terminated)
+                print("truncated:", truncated)
                 total_reward += reward
 
             env.render()

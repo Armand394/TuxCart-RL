@@ -1,6 +1,7 @@
 {
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "Debug stk_actor.learn",
             "type": "debugpy",
@@ -20,6 +21,18 @@
             "env": {
                 "PYTHONPATH": "."
             }
+        },
+        {
+            "name": "Debug master-mind",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "/home/jeanne/Documents/M2/.venv/bin/master-mind", 
+            "args": ["rl", "stk-race", "--num-karts", "5", "--interaction", "none", "stk_actor"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "justMyCode":false
         }
     ]
 }

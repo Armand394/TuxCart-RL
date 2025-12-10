@@ -10,6 +10,8 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.env_checker import check_env
 from bbrl.agents.gymnasium import make_env
 from stable_baselines3.common.callbacks import CheckpointCallback, EveryNTimesteps
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
+from stable_baselines3.common.monitor import Monitor
 
 from .actors import SB3Actor
 from .pystk_actor import env_name, get_wrappers, player_name
@@ -32,6 +34,9 @@ def main():
     )
 
     env = base_env()
+    env = Monitor(env)
+    env = DummyVecEnv([base_env])
+    env = VecNormalize(env, norm_obs=True, norm_reward=False)
     print("Obs space:", env.observation_space)
     print("Action space:", env.action_space)
     print("sample obs:", env.reset()[0])
@@ -96,6 +101,7 @@ def main():
     print("Model will be saved to:", mod_path / "models/model.zip")
     torch.save(policy.state_dict(), mod_path / "pystk_actor.pth")
     model.save(mod_path / "models/model.zip")
+    env.save(mod_path / "models/vecnormalize.pkl")
 
 if __name__ == "__main__":
     main()

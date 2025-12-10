@@ -34,3 +34,4 @@ class FlattenDictWrapper(gym.ObservationWrapper):
         cont = obs['continuous']
         disc = np.concatenate([np.eye(n)[obs['discrete'][i]] for i, n in enumerate(self.discrete_dims)])
         return np.concatenate([cont, disc])
+    
