@@ -67,6 +67,7 @@ def main():
 
         # model = SAC.load(last_checkpoint, env)
         model = SAC.load(last_checkpoint, env=env, tensorboard_log=str(LOG_DIR))
+        model.num_timesteps = int(last_checkpoint.stem.split("_")[2])
         replay_buf_path = last_checkpoint.with_suffix("").as_posix() + "_replay_buffer.pkl"
         if Path(replay_buf_path).exists():
             model.load_replay_buffer(replay_buf_path)
@@ -93,7 +94,7 @@ def main():
             tensorboard_log=str(LOG_DIR)
         )
 
-    model.learn(total_timesteps=500_000,tb_log_name="run_1", progress_bar = True, callback=event_callback)
+    model.learn(total_timesteps=1000_000,tb_log_name="run_1", progress_bar = True, callback=event_callback)
 
     policy = model.policy
 
