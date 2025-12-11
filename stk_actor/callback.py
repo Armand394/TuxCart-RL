@@ -20,7 +20,7 @@ class FeatureImportanceBarCallback(BaseCallback):
         obs = torch.tensor(mean_obs, dtype=torch.float32).unsqueeze(0).to(device)
         obs.requires_grad_(True)
 
-        action, _ = self.model.policy(obs, deterministic=True).to(device)
+        action, _ = self.model.policy(obs, deterministic=True)
 
         action.sum().backward()
 

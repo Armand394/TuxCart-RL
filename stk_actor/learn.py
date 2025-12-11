@@ -95,7 +95,7 @@ def main():
             tensorboard_log=str(LOG_DIR)
         )
 
-    model.learn(total_timesteps=800_000,tb_log_name="run_2", progress_bar = True, callback=[event_callback, feature_cb])
+    model.learn(total_timesteps=800_000,tb_log_name="run_3", progress_bar = True, callback=[event_callback])
 
     policy = model.policy
 
