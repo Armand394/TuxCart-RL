@@ -95,7 +95,7 @@ def main():
             tensorboard_log=str(LOG_DIR)
         )
 
-    model.learn(total_timesteps=10_000,tb_log_name="run_1", progress_bar = True, callback=event_callback)
+    model.learn(total_timesteps=800_000,tb_log_name="run_2", progress_bar = True, callback=event_callback)
 
     policy = model.policy
 
@@ -103,7 +103,7 @@ def main():
     print("Model will be saved to:", mod_path / "models/model.zip")
     torch.save(policy.state_dict(), mod_path / "pystk_actor.pth")
     model.save(mod_path / "models/model.zip")
-    # env.save(mod_path / "models/vecnormalize.pkl")
+    env.save(mod_path / "models/vecnormalize.pkl")
 
 if __name__ == "__main__":
     main()

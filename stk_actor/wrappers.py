@@ -7,7 +7,6 @@ class FlattenActionSpace(gym.ActionWrapper):
     def __init__(self, env):
         super().__init__(env)
         assert isinstance(env.action_space, gym.spaces.Dict)
-        print("Original action space:", env.action_space)
         # self.action_space = env.action_space["continuous"]
         low_acc = env.action_space["acceleration"].low
         high_acc = env.action_space["acceleration"].high
@@ -17,7 +16,6 @@ class FlattenActionSpace(gym.ActionWrapper):
         high = np.concatenate([high_acc, high_steer])
         self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
     def action(self, action):
-        print(action)
 
         accel = float(action[0])
         steer = float(action[1])
@@ -40,7 +38,6 @@ class FlattenActionSpaceEval(gym.ActionWrapper):
     def __init__(self, env):
         super().__init__(env)
         assert isinstance(env.action_space, gym.spaces.Dict)
-        print("Original action space:", env.action_space)
         # self.action_space = env.action_space["continuous"]
         low_acc = env.action_space["acceleration"].low
         high_acc = env.action_space["acceleration"].high
@@ -50,7 +47,6 @@ class FlattenActionSpaceEval(gym.ActionWrapper):
         high = np.concatenate([high_acc, high_steer])
         self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
     def action(self, action):
-        print(action)
 
         accel = action["acc"]
         steer = action["steer"]
@@ -66,7 +62,6 @@ class FlattenActionSpaceEval(gym.ActionWrapper):
             "nitro": 0,
             "rescue": 0,
         }
-        print("Full action:", full_action)
         return full_action
     
 class FlattenDictWrapper(gym.ObservationWrapper):
