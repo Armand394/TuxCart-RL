@@ -15,7 +15,7 @@ from stable_baselines3.common.monitor import Monitor
 
 from .actors import SB3Actor
 from .pystk_actor import env_name, get_wrappers, player_name,get_wrappers_train
-
+from .callback import FeatureImportanceBarCallback
 
 
 
@@ -51,7 +51,7 @@ def main():
                                              save_replay_buffer=True)
     event_callback = EveryNTimesteps(n_steps=5000, callback=checkpoint_on_event)
     checkpoints = sorted(CHECKPOINT_DIR.glob("rl_model_*_steps.zip"))
-
+    feature_cb = FeatureImportanceBarCallback(env, eval_freq=5000)
 
     policy_kwargs = dict(
         net_arch=dict(
@@ -95,15 +95,18 @@ def main():
             tensorboard_log=str(LOG_DIR)
         )
 
-    model.learn(total_timesteps=800_000,tb_log_name="run_2", progress_bar = True, callback=event_callback)
+    model.learn(total_timesteps=800_000,tb_log_name="run_2", progress_bar = True, callback=[event_callback, feature_cb])
 
     policy = model.policy
 
     sb3_actor = SB3Actor(model)
-    print("Model will be saved to:", mod_path / "models/model.zip")
-    torch.save(policy.state_dict(), mod_path / "pystk_actor.pth")
-    model.save(mod_path / "models/model.zip")
-    env.save(mod_path / "models/vecnormalize.pkl")
+    print("Model will be saved to:", mod_path / "models/model_test.zip")
+    torch.save(policy.state_dict(), mod_path / "pystk_actor_test.pth")
+    model.save(mod_path / "models/model_test.zip")
+    env.save(mod_path / "models/vecnormalize_test.pkl")
+
+
+
 
 if __name__ == "__main__":
     main()
