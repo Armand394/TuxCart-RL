@@ -14,7 +14,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 from stable_baselines3.common.monitor import Monitor
 
 from .actors import SB3Actor
-from .pystk_actor import env_name, get_wrappers, player_name
+from .pystk_actor import env_name, get_wrappers, player_name,get_wrappers_train
 
 
 
@@ -27,19 +27,20 @@ def main():
     base_env = partial(
         make_env,
         env_name,
-        wrappers=get_wrappers(),
+        wrappers=get_wrappers_train(),
         render_mode=None,
         difficulty =0,
         agent=AgentSpec(use_ai=False, name=player_name),
     )
 
-    env = base_env()
-    env = Monitor(env)
-    env = DummyVecEnv([base_env])
+    env = DummyVecEnv([
+        lambda: Monitor(base_env())
+    ])
+    env = VecNormalize(env, norm_obs=True, norm_reward=False)
     # env = VecNormalize(env, norm_obs=True, norm_reward=False)
     print("Obs space:", env.observation_space)
     print("Action space:", env.action_space)
-    print("sample obs:", env.reset()[0])
+    print("sample obs:", env.observation_space.sample())
     print("sample action:", env.action_space.sample())
 
     # check_env(env, warn=True)
@@ -94,7 +95,7 @@ def main():
             tensorboard_log=str(LOG_DIR)
         )
 
-    model.learn(total_timesteps=100_000,tb_log_name="run_1", progress_bar = True, callback=event_callback)
+    model.learn(total_timesteps=10_000,tb_log_name="run_1", progress_bar = True, callback=event_callback)
 
     policy = model.policy
 
@@ -102,7 +103,7 @@ def main():
     print("Model will be saved to:", mod_path / "models/model.zip")
     torch.save(policy.state_dict(), mod_path / "pystk_actor.pth")
     model.save(mod_path / "models/model.zip")
-    env.save(mod_path / "models/vecnormalize.pkl")
+    # env.save(mod_path / "models/vecnormalize.pkl")
 
 if __name__ == "__main__":
     main()
