@@ -81,16 +81,16 @@ def main():
         model = SAC(
             "MlpPolicy",
             env,
-            learning_rate=3e-4,
+            learning_rate=2.1573e-05,
             buffer_size=1_000_000,
             batch_size=512,
             train_freq=1,
             gradient_steps=1,
-            gamma=0.99,
+            gamma=0.99499,
             tau=0.005,
             target_update_interval=1,
             learning_starts=20_000,
-            ent_coef="auto",
+            ent_coef=0.0048,
             policy_kwargs=policy_kwargs,
             tensorboard_log=str(LOG_DIR)
         )
@@ -100,10 +100,10 @@ def main():
     policy = model.policy
 
     sb3_actor = SB3Actor(model)
-    print("Model will be saved to:", mod_path / "models/model_test.zip")
-    torch.save(policy.state_dict(), mod_path / "pystk_actor_test.pth")
-    model.save(mod_path / "models/model_test.zip")
-    env.save(mod_path / "models/vecnormalize_test.pkl")
+    print("Model will be saved to:", mod_path / "models/model_best_param.zip")
+    torch.save(policy.state_dict(), mod_path / "pystk_actor_best_param.pth")
+    model.save(mod_path / "models/model_best_param.zip")
+    env.save(mod_path / "models/vecnormalize_best_param.pkl")
 
 
 
