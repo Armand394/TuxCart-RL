@@ -4,7 +4,7 @@ import torch
 from pathlib import Path
 import inspect
 from functools import partial
-
+import os
 from pystk2_gymnasium import AgentSpec
 from stable_baselines3 import SAC
 from stable_baselines3.common.env_checker import check_env
@@ -22,6 +22,14 @@ from .callback import FeatureImportanceBarCallback
 CHECKPOINT_DIR = Path("/Vrac/TD_proj/checkpoints")
 LOG_DIR = Path("/Vrac/TD_proj/logs")
 
+def load_vecnormalize(env, save_path):
+    if save_path.exists():
+        print("Load VecNormalize:", save_path)
+        env = VecNormalize.load(save_path, env)
+    else:
+        env = VecNormalize(env, norm_obs=True, norm_reward=False)
+    return env
+
 
 def main():              
     base_env = partial(
@@ -33,24 +41,22 @@ def main():
         agent=AgentSpec(use_ai=False, name=player_name),
     )
 
+    check_env(base_env(), warn=True)
     env = DummyVecEnv([
         lambda: Monitor(base_env())
     ])
-    env = VecNormalize(env, norm_obs=True, norm_reward=False)
+    vecnorm_path = Path("models/vecnormalize_best_param.pkl")
+    env = load_vecnormalize(env, vecnorm_path)
     # env = VecNormalize(env, norm_obs=True, norm_reward=False)
     print("Obs space:", env.observation_space)
     print("Action space:", env.action_space)
-    print("sample obs:", env.observation_space.sample())
-    print("sample action:", env.action_space.sample())
-
-    # check_env(env, warn=True)
+    
     mod_path = Path(inspect.getfile(get_wrappers)).parent
     
     checkpoint_on_event = CheckpointCallback(save_freq=1, 
                                              save_path=CHECKPOINT_DIR, 
                                              save_replay_buffer=True)
     event_callback = EveryNTimesteps(n_steps=5000, callback=checkpoint_on_event)
-    checkpoints = sorted(CHECKPOINT_DIR.glob("rl_model_*_steps.zip"))
     feature_cb = FeatureImportanceBarCallback(env, eval_freq=5000)
 
     policy_kwargs = dict(
@@ -61,6 +67,7 @@ def main():
         activation_fn=torch.nn.ReLU
     )
 
+    checkpoints = sorted(CHECKPOINT_DIR.glob("rl_model_*_steps.zip"))
 
     if checkpoints:
         last_checkpoint = checkpoints[-1]
@@ -68,13 +75,18 @@ def main():
 
         # model = SAC.load(last_checkpoint, env)
         model = SAC.load(last_checkpoint, env=env, tensorboard_log=str(LOG_DIR))
-        model.num_timesteps = int(last_checkpoint.stem.split("_")[2])
-        replay_buf_path = last_checkpoint.with_suffix("").as_posix() + "_replay_buffer.pkl"
-        if Path(replay_buf_path).exists():
+        steps = last_checkpoint.stem.split("_")[2]
+        model.num_timesteps = int(steps)
+        print("num steps =", model.num_timesteps)
+
+        if os.path.exists(last_checkpoint.parent / f"rl_model_replay_buffer_{steps}_steps.pkl"):
+            replay_buf_path = last_checkpoint.parent / f"rl_model_replay_buffer_{steps}_steps.pkl"
+            print("replay buffer:", replay_buf_path)
             model.load_replay_buffer(replay_buf_path)
-            print("Load replay buffer.")
+
         else:
-            print("replay buffer not found")
+            print("rreplay buffer not found")
+
 
     else:
         print("start from scratch")
@@ -95,15 +107,15 @@ def main():
             tensorboard_log=str(LOG_DIR)
         )
 
-    model.learn(total_timesteps=800_000,tb_log_name="run_3", progress_bar = True, callback=[event_callback])
+    model.learn(total_timesteps=1_000_000,tb_log_name="continue_run", progress_bar = True, callback=[event_callback,feature_cb])
 
     policy = model.policy
 
     sb3_actor = SB3Actor(model)
-    print("Model will be saved to:", mod_path / "models/model_best_param.zip")
-    torch.save(policy.state_dict(), mod_path / "pystk_actor_best_param.pth")
-    model.save(mod_path / "models/model_best_param.zip")
-    env.save(mod_path / "models/vecnormalize_best_param.pkl")
+    print("Model will be saved to:", mod_path / "models/model_best_param_3.zip")
+    torch.save(policy.state_dict(), mod_path / "pystk_actor_best_param_3.pth")
+    model.save(mod_path / "models/model_best_param_3.zip")
+    env.save(mod_path / "models/vecnormalize_best_param_3.pkl")
 
 
 
