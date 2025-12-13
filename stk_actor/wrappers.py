@@ -34,6 +34,7 @@ class FlattenActionSpace(gym.ActionWrapper):
 
         return full_action
     
+
 class FlattenActionSpaceEval(gym.ActionWrapper):
     def __init__(self, env):
         super().__init__(env)
@@ -64,6 +65,60 @@ class FlattenActionSpaceEval(gym.ActionWrapper):
         }
         return full_action
 
+class OnlySteerAction(gym.ActionWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        assert isinstance(env.action_space, gym.spaces.Dict)
+        # self.action_space = env.action_space["continuous"]
+        low_steer = env.action_space["steer"].low
+        high_steer = env.action_space["steer"].high
+        self.action_space = spaces.Box(low=low_steer, high=high_steer, dtype=np.float32)
+    def action(self, action):
+
+        # accel = float(action[0])
+        steer = float(action[0])
+
+        full_action = {
+            "acceleration": 1.0,
+            "steer": np.array([steer], dtype=np.float32),
+
+            # forcés à zéro
+            "brake": 0,
+            "drift": 0,
+            "fire": 0,
+            "nitro": 0,
+            "rescue": 0,
+        }
+
+        return full_action
+    
+class OnlySteerActionEval(gym.ActionWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        assert isinstance(env.action_space, gym.spaces.Dict)
+        # self.action_space = env.action_space["continuous"]
+        low_steer = env.action_space["steer"].low
+        high_steer = env.action_space["steer"].high
+        self.action_space = spaces.Box(low=low_steer, high=high_steer, dtype=np.float32)
+    def action(self, action):
+
+        # accel = float(action[0])
+        steer = float(action["steer"])
+
+        full_action = {
+            "acceleration": 1.0,
+            "steer": np.array([steer], dtype=np.float32),
+
+            # forcés à zéro
+            "brake": 0,
+            "drift": 0,
+            "fire": 0,
+            "nitro": 0,
+            "rescue": 0,
+        }
+
+        return full_action
+    
     
 class FilterWrapperEval(gym.ObservationWrapper):
     def __init__(self, env):
