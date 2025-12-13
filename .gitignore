@@ -1,5 +1,6 @@
 #
 logs/
+runs/
 *.zip
 
 # Byte-compiled / optimized / DLL files
