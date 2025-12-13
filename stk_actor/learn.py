@@ -17,7 +17,12 @@ from .actors import SB3Actor
 from .pystk_actor import env_name, get_wrappers, player_name,get_wrappers_train
 from .callback import FeatureImportanceBarCallback
 
+#import gestion des arguments en appelant le script
+from argparse import ArgumentParser
 
+parser = ArgumentParser()
+parser.add_argument("from_scratch", type=bool, default=True, help="True to train from scratch, False to load last checkpoint")
+args = parser.parse_args()
 
 CHECKPOINT_DIR = Path("/Vrac/TD_proj/checkpoints")
 LOG_DIR = Path("/Vrac/TD_proj/logs")
@@ -69,7 +74,7 @@ def main():
 
     checkpoints = sorted(CHECKPOINT_DIR.glob("rl_model_*_steps.zip"))
 
-    if checkpoints:
+    if checkpoints and not args.from_scratch:
         last_checkpoint = checkpoints[-1]
         print("Load checkpoint:", last_checkpoint)
 
@@ -107,16 +112,16 @@ def main():
             tensorboard_log=str(LOG_DIR)
         )
 
-    model.learn(total_timesteps=1_000_000,tb_log_name="continue_run", progress_bar = True, callback=[event_callback,feature_cb])
+    model.learn(total_timesteps=200_000,tb_log_name="only_steer", progress_bar = True, callback=[event_callback,feature_cb])
 
     policy = model.policy
 
     sb3_actor = SB3Actor(model)
-    print("Model will be saved to:", mod_path / "models/model_best_param_3.zip")
-    torch.save(policy.state_dict(), mod_path / "pystk_actor_best_param_3.pth")
-    model.save(mod_path / "models/model_best_param_3.zip")
-    env.save(mod_path / "models/vecnormalize_best_param_3.pkl")
-
+    suffixe = "_os"
+    print("Model will be saved to:", mod_path / f"models/model{suffixe}.zip")
+    torch.save(policy.state_dict(), mod_path / f"pystk_actor{suffixe}.pth")
+    model.save(mod_path / f"models/model{suffixe}.zip")
+    env.save(mod_path / f"models/vecnormalize{suffixe}.pkl")
 
 
 
