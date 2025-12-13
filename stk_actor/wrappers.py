@@ -2,7 +2,7 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 from pystk2_gymnasium.wrappers import ActionObservationWrapper
-
+import pickle 
 class FlattenActionSpace(gym.ActionWrapper):
     def __init__(self, env):
         super().__init__(env)
@@ -123,6 +123,10 @@ class FilterWrapperEval(gym.ObservationWrapper):
         for key in self.keep_keys:
             value = obs[key]
             filtered = self.filter_value(key, value)
+            print("================================")
+            print("key:", key)
+            print("--------------------------------")
+            print("filtered:", filtered)
             parts.append(filtered)
             # parts[key] = filtered
 
@@ -216,3 +220,26 @@ class OnlyContinuousActionsWrapper(ActionObservationWrapper):
 
     def action(self, action) :
         return {**action, **{key: 0 for key, _ in self.discrete_actions.items()}}
+    
+
+
+class ObsNormalizeWrapper(gym.ObservationWrapper):
+    def __init__(self, env, vecnormalize_path, epsilon=1e-8, clip_obs=10.0):
+        super().__init__(env)
+
+        with open(vecnormalize_path, "rb") as f:
+            vecnorm = pickle.load(f)
+
+        self.mean = vecnorm.obs_rms.mean
+        self.var = vecnorm.obs_rms.var
+        self.epsilon = epsilon
+        self.clip_obs = clip_obs
+
+        assert self.observation_space.shape == self.mean.shape, (
+            "Observation space incompatible avec VecNormalize"
+        )
+
+    def observation(self, obs):
+        obs = obs["continuous"]
+        obs = (obs - self.mean) / np.sqrt(self.var + self.epsilon)
+        return {"continuous": np.clip(obs, -self.clip_obs, self.clip_obs)}
