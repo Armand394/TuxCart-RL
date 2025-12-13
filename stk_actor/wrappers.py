@@ -162,10 +162,7 @@ class FilterWrapperEval(gym.ObservationWrapper):
         for key in self.keep_keys:
             value = obs[key]
             filtered = self.filter_value(key, value)
-            print("================================")
-            print("key:", key)
-            print("--------------------------------")
-            print("filtered:", filtered)
+
             parts.append(filtered)
             # parts[key] = filtered
 

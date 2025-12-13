@@ -1,6 +1,6 @@
 
 from .actors import Actor, SB3Actor, SamplingActor, ArgmaxActor
-from .wrappers import  FlattenActionSpace, FlattenActionSpaceEval,FilterWrapper, FilterWrapperEval,ObsNormalizeWrapper
+from .wrappers import OnlySteerAction,OnlySteerActionEval, FlattenActionSpace, FlattenActionSpaceEval,FilterWrapper, FilterWrapperEval,ObsNormalizeWrapper
 from typing import List, Callable
 import gymnasium as gym
 from bbrl.agents import Agents, Agent
@@ -32,13 +32,15 @@ def get_wrappers_train() -> List[Callable[[gym.Env], gym.Wrapper]]:
 def get_wrappers() -> List[Callable[[gym.Env], gym.Wrapper]]:
     """Returns a list of additional wrappers to be applied to the base
     environment"""
-    vecnorm_path= Path('stk_actor/models/vecnormalize_best_param.pkl')
+    suffixe ='_os'
+    vecnorm_path= Path(f'stk_actor/models/vecnormalize{suffixe}.pkl')
     return [
         # Example of a custom wrapper
         # lambda env: FlattenDictWrapper(env),
         # lambda env: FlattenActionSpace(env),
         lambda env: PolarObservations(env),
         lambda env: FlattenActionSpaceEval(env),
+        # lambda env: OnlySteerActionEval(env),
         lambda env: FilterWrapperEval(env),
         lambda env: ObsNormalizeWrapper(env, vecnorm_path),
     ]
