@@ -16,7 +16,7 @@ from stable_baselines3.common.monitor import Monitor
 from .actors import SB3Actor
 from .pystk_actor import env_name, get_wrappers, player_name,get_wrappers_train
 from .callback import FeatureImportanceBarCallback
-
+from stable_baselines3.common.vec_env import SubprocVecEnv
 #import gestion des arguments en appelant le script
 from argparse import ArgumentParser
 
@@ -50,6 +50,9 @@ def main():
     env = DummyVecEnv([
         lambda: Monitor(base_env())
     ])
+
+
+
     vecnorm_path = Path("models/vecnormalize_best_param.pkl")
     env = load_vecnormalize(env, vecnorm_path)
     # env = VecNormalize(env, norm_obs=True, norm_reward=False)
@@ -66,8 +69,8 @@ def main():
 
     policy_kwargs = dict(
         net_arch=dict(
-            pi=[512, 512, 256],
-            qf=[512, 512, 256]
+            pi=[256, 256],
+            qf=[256, 256]
         ),
         activation_fn=torch.nn.ReLU
     )
@@ -100,24 +103,24 @@ def main():
             env,
             learning_rate=2.1573e-05,
             buffer_size=1_000_000,
-            batch_size=512,
-            train_freq=1,
-            gradient_steps=1,
+            batch_size=256,
+            train_freq=4,
+            gradient_steps=4,
             gamma=0.99499,
             tau=0.005,
             target_update_interval=1,
-            learning_starts=20_000,
-            ent_coef=0.0048,
+            learning_starts=70_000,
+            ent_coef="auto",
             policy_kwargs=policy_kwargs,
             tensorboard_log=str(LOG_DIR)
         )
 
-    model.learn(total_timesteps=200_000,tb_log_name="only_steer", progress_bar = True, callback=[event_callback,feature_cb])
+    model.learn(total_timesteps=500_000,tb_log_name="new_accel", progress_bar = True, callback=[event_callback])
 
     policy = model.policy
 
     sb3_actor = SB3Actor(model)
-    suffixe = "_os"
+    suffixe = "_new_accel"
     print("Model will be saved to:", mod_path / f"models/model{suffixe}.zip")
     torch.save(policy.state_dict(), mod_path / f"pystk_actor{suffixe}.pth")
     model.save(mod_path / f"models/model{suffixe}.zip")

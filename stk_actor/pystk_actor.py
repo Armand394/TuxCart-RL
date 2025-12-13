@@ -11,7 +11,7 @@ import gymnasium as gym
 from pystk2_gymnasium import PolarObservations
 import torch
 import numpy as np
-from path import Path
+# from path import Path
 # env_name = "supertuxkart/flattened-v0"
 # env_name="supertuxkart/flattened_continuous_actions-v0"
 env_name = "supertuxkart/full-v0"
@@ -26,6 +26,7 @@ def get_wrappers_train() -> List[Callable[[gym.Env], gym.Wrapper]]:
         # lambda env: FlattenActionSpace(env),
         lambda env: PolarObservations(env),
         lambda env: FlattenActionSpace(env),
+        # lambda env: OnlySteerAction(env),
         lambda env: FilterWrapper(env),
     ]
 
@@ -67,7 +68,8 @@ def reconstruct_sac_policy(observation_space, action_space, state_dict):
         "MlpPolicy",
         dummy_env,
         policy_kwargs=dict(
-            net_arch=dict(pi=[512,512,256], qf=[512,512,256]),
+            net_arch=dict(pi=[256,256], qf=[256,256]),
+            # net_arch=dict(pi=[512,512,256], qf=[512,512,256]),
             activation_fn=torch.nn.ReLU
         ),
         verbose=0,

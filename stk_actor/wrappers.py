@@ -3,39 +3,111 @@ import numpy as np
 from gymnasium import spaces
 from pystk2_gymnasium.wrappers import ActionObservationWrapper
 import pickle 
-class FlattenActionSpace(gym.ActionWrapper):
+# class FlattenActionSpace(gym.ActionWrapper):
+#     def __init__(self, env):
+#         super().__init__(env)
+#         assert isinstance(env.action_space, gym.spaces.Dict)
+#         # self.action_space = env.action_space["continuous"]
+#         low_acc = env.action_space["acceleration"].low
+#         high_acc = env.action_space["acceleration"].high
+#         low_steer = env.action_space["steer"].low
+#         high_steer = env.action_space["steer"].high
+#         low = np.concatenate([low_acc, low_steer])
+#         high = np.concatenate([high_acc, high_steer])
+#         self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
+#         self.last_speed = 0.0
+
+#     def observation(self, obs):
+#         print("++++++++ OBSERVATION ++++++++")
+#         print(obs)
+#         if "velocity" in obs:
+#             print("HHHHHHHERE")
+#             v = np.array(obs["velocity"]).reshape(-1)
+#             self.last_speed = float(np.linalg.norm(v))
+#         return obs
+    
+#     def action(self, action):
+
+#         raw_accel = float(action[0])
+#         accel = 0.3 + 0.7 * raw_accel
+#         steer = float(action[1])
+#         speed = self.last_speed
+#         print("===============================")
+#         print("Current speed:", speed)
+#         print("===============================")
+#         brake = int(abs(steer) > 0.6 and speed > 15.0)
+#         drift = int(abs(steer) > 0.7 and speed > 18.0)
+#         nitro = int(abs(steer) < 0.1 and speed > 10.0)
+#         rescue = int(speed < 1.0)
+
+#         full_action = {
+#             "acceleration": np.array([accel], dtype=np.float32),
+#             "steer": np.array([steer], dtype=np.float32),
+
+#             "brake": brake,
+#             "drift": drift,
+#             "nitro": nitro,
+#             "rescue": rescue,
+#             "fire": 0,
+#         }
+
+#         return full_action
+    
+class FlattenActionSpace(gym.Wrapper):
     def __init__(self, env):
         super().__init__(env)
         assert isinstance(env.action_space, gym.spaces.Dict)
-        # self.action_space = env.action_space["continuous"]
+
         low_acc = env.action_space["acceleration"].low
         high_acc = env.action_space["acceleration"].high
         low_steer = env.action_space["steer"].low
         high_steer = env.action_space["steer"].high
+
         low = np.concatenate([low_acc, low_steer])
         high = np.concatenate([high_acc, high_steer])
-        self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
-    def action(self, action):
 
-        accel = float(action[0])
+        self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
+        self.last_speed = 0.0
+
+    def reset(self, **kwargs):
+        obs, info = self.env.reset(**kwargs)
+        self.update_speed(obs)
+        return obs, info
+
+    def step(self, action):
+        full_action = self.action(action)
+        obs, reward, terminated, truncated, info = self.env.step(full_action)
+        self.update_speed(obs)
+        return obs, reward, terminated, truncated, info
+
+    def update_speed(self, obs):
+        v = np.array(obs["velocity"]).reshape(-1)
+        self.last_speed = float(np.linalg.norm(v))
+
+    def action(self, action):
+        raw_accel = float(action[0])
         steer = float(action[1])
+
+        accel = 0.3 + 0.7 * raw_accel
+        speed = self.last_speed
+
+        brake  = int(abs(steer) > 0.6 and speed > 15.0)
+        drift  = int(abs(steer) > 0.7 and speed > 18.0)
+        nitro  = int(abs(steer) < 0.1 and speed > 10.0)
+        rescue = int(speed < 1.0)
 
         full_action = {
             "acceleration": np.array([accel], dtype=np.float32),
             "steer": np.array([steer], dtype=np.float32),
-
-            # forcés à zéro
-            "brake": 0,
-            "drift": 0,
+            "brake": brake,
+            "drift": drift,
+            "nitro": nitro,
+            "rescue": rescue,
             "fire": 0,
-            "nitro": 0,
-            "rescue": 0,
         }
-
         return full_action
-    
 
-class FlattenActionSpaceEval(gym.ActionWrapper):
+class FlattenActionSpaceEval(gym.Wrapper):
     def __init__(self, env):
         super().__init__(env)
         assert isinstance(env.action_space, gym.spaces.Dict)
@@ -47,9 +119,12 @@ class FlattenActionSpaceEval(gym.ActionWrapper):
         low = np.concatenate([low_acc, low_steer])
         high = np.concatenate([high_acc, high_steer])
         self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
+        self.last_speed = 0.0
+    
     def action(self, action):
 
-        accel = action["acc"]
+        raw_accel = action["acc"]
+        accel = 0.3 + 0.7 * raw_accel
         steer = action["steer"]
 
         full_action = {
@@ -279,3 +354,6 @@ class ObsNormalizeWrapper(gym.ObservationWrapper):
         obs = obs["continuous"]
         obs = (obs - self.mean) / np.sqrt(self.var + self.epsilon)
         return {"continuous": np.clip(obs, -self.clip_obs, self.clip_obs)}
+    
+
+        
